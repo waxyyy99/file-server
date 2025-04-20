@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain
+namespace Server
 {
     public class ClientSession
     {
@@ -30,7 +30,7 @@ namespace Domain
                 while (true)
                 {
 
-                    var recievedMessage = await Stream.ReadAsync();
+                    var recievedMessage = await Stream.ReadStringAsync();
                     Console.WriteLine("[server] Recieved: {0}", recievedMessage);
 
                     var _ = recievedMessage.Split();
@@ -104,7 +104,7 @@ namespace Domain
                         responseString += ' ' + response.Content;
                     }
                     Console.WriteLine("[server] Send: " + responseString);
-                    await Stream.WriteAsync(responseString);
+                    await Stream.WriteStringAsync(responseString);
                 }
             }
             catch (Exception ex)

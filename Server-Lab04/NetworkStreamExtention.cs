@@ -5,11 +5,11 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain
+namespace Server
 {
     public static class NetworkStreamExtention
     {
-        public static async Task<string> ReadAsync(this NetworkStream ns)
+        public static async Task<string> ReadStringAsync(this NetworkStream ns)
         {
             byte[] conentLengthBuffer = new byte[4];
             int bytesRead = await ns.ReadAsync(conentLengthBuffer, 0, 4);
@@ -21,7 +21,7 @@ namespace Domain
             return Encoding.UTF8.GetString(buffer, 0, bytesRead);
         }
 
-        public static async Task WriteAsync(this NetworkStream ns, string message)
+        public static async Task WriteStringAsync(this NetworkStream ns, string message)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(message);
             var contentLengthByte = BitConverter.GetBytes(bytes.Length);

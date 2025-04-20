@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace Domain
+namespace Server
 {
     internal class Program
     {

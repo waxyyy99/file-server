@@ -1,12 +1,6 @@
-﻿using Domain;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Server;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Client
 {
@@ -30,27 +24,6 @@ namespace Client
             {
                 Console.WriteLine("Ошибка клиента: {0}", ex.Message);
             }
-        }
-
-        public static async Task<string> ReadString(NetworkStream ns)
-        {
-            byte[] conentLengthBuffer = new byte[4];
-            int bytesRead = await ns.ReadAsync(conentLengthBuffer, 0, 4);
-            int contentLength = BitConverter.ToInt32(conentLengthBuffer, 0);
-
-            byte[] buffer = new byte[contentLength];
-            bytesRead = await ns.ReadAsync(buffer, 0, buffer.Length);
-
-            return Encoding.UTF8.GetString(buffer, 0, bytesRead);
-        }
-
-        public static async Task WriteString(NetworkStream ns, string message)
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes(message);
-            var contentLengthByte = BitConverter.GetBytes(bytes.Length);
-
-            await ns.WriteAsync(contentLengthByte, 0, contentLengthByte.Length);
-            await ns.WriteAsync(bytes, 0, bytes.Length);
         }
 
         public async Task StartUp(string[] args)
@@ -88,10 +61,11 @@ namespace Client
                                 }
                                 query += input;
 
-                                await WriteString(Stream, query);
+                                await Stream.WriteStringAsync(query);
+                                //await Stream.WriteString(Stream, query);
                                 Console.WriteLine("The request was sent.");
 
-                                string resp = await ReadString(Stream);
+                                string resp = await Stream.ReadStringAsync();
                                 if (resp.Split()[0] == "200")
                                 {
                                     Console.Write("The content of the file is: " + resp[4..]);
@@ -124,10 +98,10 @@ namespace Client
                                 }
                                 query += fileName + ' ' + fileContent;
 
-                                await WriteString(Stream, query);
+                                await Stream.WriteStringAsync(query);
                                 Console.WriteLine("The request was sent.");
 
-                                string resp = await ReadString(Stream);
+                                string resp = await Stream.ReadStringAsync();
                                 if (resp == "200")
                                 {
                                     Console.WriteLine("The response says that the file was successfully created!");
@@ -153,10 +127,10 @@ namespace Client
                                 }
                                 query += input;
 
-                                await WriteString(Stream, query);
+                                await Stream.WriteStringAsync(query);
                                 Console.WriteLine("The request was sent.");
 
-                                string resp = await ReadString(Stream);
+                                string resp = await Stream.ReadStringAsync();
                                 if (resp == "200")
                                 {
                                     Console.WriteLine("The response says that the file was successfully deleted!");
