@@ -9,6 +9,7 @@ namespace Server
 {
     public class ClientSession
     {
+        private readonly ServerService _serverService;
         public TcpClient Client { get; }
         public NetworkStream Stream => Client.GetStream();
 
@@ -16,9 +17,10 @@ namespace Server
         public string? Username { get; set; }
 
 
-        public ClientSession(TcpClient client)
+        public ClientSession(TcpClient client, ServerService service)
         {
             Client = client;
+            _serverService = service;
         }
 
         public async Task HandleAsync()
@@ -29,6 +31,7 @@ namespace Server
             {
                 while (true)
                 {
+                    using var cts = new CancellationTokenSource();
 
                     var recievedMessage = await Stream.ReadStringAsync();
                     Console.WriteLine("[server] Recieved: {0}", recievedMessage);
@@ -46,66 +49,83 @@ namespace Server
 
                     switch (command)
                     {
+                        // PUT {fileName}
+                        // binary content
                         case "PUT":
                             {
                                 try
                                 {
                                     var fileName = _[1];
-                                    int firstSpace = recievedMessage.IndexOf(' ');
-                                    int secondSpaceInd = recievedMessage.IndexOf(' ', firstSpace + 1);
-                                    var text = recievedMessage[(secondSpaceInd + 1)..];
-                                    await ServerService.PutFile(fileName, text);
 
-                                    response = new(200, null);
+                                    //int firstSpace = recievedMessage.IndexOf(' ');
+                                    //int secondSpaceInd = recievedMessage.IndexOf(' ', firstSpace + 1);
+                                    //var text = recievedMessage[(secondSpaceInd + 1)..];
+                                    var fileId = _serverService.CreateFile(fileName);
+                                    response = new(200, fileId.Item2.ToString());
+                                    await response.Send(Stream);
+
+                                    await Stream.ReadFileAsync(fileId.Item1, cts.Token);
                                 }
                                 catch
                                 {
                                     response = new(403, null);
+                                    await response.Send(Stream);
                                 }
                                 break;
                             }
+                        // DELETE [BY_ID | BY_NAME] [ID | NAME]
                         case "DELETE":
                             {
                                 try
                                 {
-                                    var fileName = _[1];
-                                    ServerService.DeleteFile(fileName);
-                                    response = new(200, null);
+                                    var method = _[1];
+                                    var fileName = _[2];
 
+                                    _serverService.DeleteFile(fileName);
+                                    response = new(200, null);
+                                    await response.Send(Stream);
                                 }
                                 catch
                                 {
                                     response = new(404, null);
+                                    await response.Send(Stream);
                                 }
                                 break;
                             }
+                        // GET [BY_ID | BY_NAME] [ID | NAME]
                         case "GET":
                             {
+                                FileInfo content;
                                 try
                                 {
                                     var fileName = recievedMessage.Split()[1];
-                                    var content = await ServerService.GetFile(fileName);
-                                    response = new(200, content);
+                                    content = _serverService.GetFile(fileName);
+                                    response = new(200, null);
+                                    await response.Send(Stream);
+
+                                    await Stream.WriteFileAsync(content, cts.Token);
+                                    Console.WriteLine("[server] Send file: " + content.Name);
                                 }
                                 catch
                                 {
                                     response = new(404, null);
+                                    await response.Send(Stream);
+                                    break;
                                 }
                                 break;
                             }
                         default:
                             response = new(400, null);
+                            await response.Send(Stream);
                             break;
                     }
 
-                    var responseString = $"{response.StatusCode}";
-                    if (!string.IsNullOrEmpty(response.Content))
-                    {
-                        responseString += ' ' + response.Content;
-                    }
-                    Console.WriteLine("[server] Send: " + responseString);
-                    await Stream.WriteStringAsync(responseString);
+                    
                 }
+            }
+            catch (OperationCanceledException) 
+            {
+                Console.WriteLine("[server] Operation breaked");
             }
             catch (Exception ex)
             {

@@ -30,34 +30,37 @@ namespace Server
             await ns.WriteAsync(bytes, 0, bytes.Length);
         }
 
-        public static async Task WriteFileAsync(this NetworkStream ns, string path, CancellationToken cancellationToken)
+        public static async Task WriteFileAsync(this NetworkStream ns, FileInfo fileInfo, CancellationToken cancellationToken)
         {
             const int bufferSize = 81920;
-            var fileInfo = new FileInfo(path);
+            var fileLength = fileInfo.Length;
+            Console.WriteLine($"File length: {fileLength}");
 
-            await ns.WriteAsync(BitConverter.GetBytes(fileInfo.Length), 0, 8, cancellationToken);
+            await ns.WriteAsync(BitConverter.GetBytes(fileLength), 0, 8, cancellationToken);
 
-            using var file = File.OpenRead(path);
+            using var file = fileInfo.OpenRead();
             await file.CopyToAsync(ns, bufferSize, cancellationToken);
         }
-        public static async Task ReadFileAsync(this NetworkStream ns, string path, CancellationToken cancellationToken)
+        public static async Task ReadFileAsync(this NetworkStream ns, FileInfo fileInfo, CancellationToken cancellationToken)
         {
             byte[] length = new byte[8];
             await ns.ReadExactlyAsync(length, cancellationToken);
             long fileLength = BitConverter.ToInt64(length, 0);
+            Console.WriteLine($"File length: {fileLength}");
 
             const int bufferSize = 81920;
             byte[] buffer = new byte[bufferSize];
             long recieved = 0;
 
-            using var fs = File.Create(path);
+            using var fs = fileInfo.OpenWrite();
             while (recieved < fileLength)
             {
                 int toRead = (int)Math.Min(fileLength - recieved, bufferSize);
-                int read = await fs.ReadAsync(buffer, 0, toRead, cancellationToken);
+                int read = await ns.ReadAsync(buffer, 0, toRead, cancellationToken);
                 if (read == 0) throw new IOException("Сокет преждевременно закрыл соединение.");
                 await fs.WriteAsync(buffer, 0, read, cancellationToken);
                 recieved += read;
+                Console.WriteLine(recieved);
             }
         }
     }

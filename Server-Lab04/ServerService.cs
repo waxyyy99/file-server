@@ -2,39 +2,76 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Server
 {
-    public class ServerService
+    public class ServerService : IDisposable
     {
-        public static async Task<string> GetFile(string fileName)
+        //public Dictionary<int, string> nameId;
+        private readonly FileIdProvider _fileIdProvider;
+        public ServerService()
         {
-            string strContent;
-            using (var file = File.OpenRead(fileName))
-            using (var sr = new StreamReader(file))
-            {
-                strContent = await sr.ReadToEndAsync();
-            }
-            return strContent;
+            const string fileName = "pairs.json";
+            FileInfo fileInfo = new(fileName);
+            _fileIdProvider = new(fileInfo);
+            //using var file = File.OpenRead(fileName);
+            //nameId = JsonSerializer.Deserialize<Dictionary<int, string>>(file)!;
         }
-        public static async Task PutFile(string fileName, string text)
+        public bool ContainsFile(string fileName) => _fileIdProvider.ContainsFile(fileName);
+        public bool ContainsFile(int fileId) => _fileIdProvider.ContainsFile(fileId);
+
+        public FileInfo GetFile(string fileName)
+        {
+            string[] path = ["server", "data", fileName];
+            var universalPath = Path.Combine(path);
+            var fileInfo = new FileInfo(universalPath);
+            if (!fileInfo.Exists)
+            {
+                throw new ArgumentException($"{universalPath} does not exists");
+            }
+            return fileInfo;
+        }
+        public FileInfo GetFile(int fileId) => GetFile(_fileIdProvider.GetFileName(fileId));
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public (FileInfo, int) CreateFile(string fileName)
         {
 
-            using (var file = File.Open(fileName, FileMode.CreateNew, FileAccess.Write))
-            using (var sw = new StreamWriter(file))
+            string[] path = ["server", "data", fileName];
+            var universalPath = Path.Combine(path);
+            var fileInfo = new FileInfo(universalPath);
+            if (fileInfo.Exists)
             {
-                await sw.WriteAsync(text);
+                throw new ArgumentException($"{universalPath} already exists.");
             }
+            
+            fileInfo.Create().Close();
+            return (fileInfo, _fileIdProvider.AppendFile(fileName));
         }
 
-        public static void DeleteFile(string fileName)
+        public void DeleteFile(string fileName)
         {
             if (!File.Exists(fileName))
             {
                 throw new Exception($"Have no file: {fileName}");
             }
             File.Delete(fileName);
+            _fileIdProvider.DeleteFile(fileName);
+        }
+        public void DeleteFile(int fileId)
+        {
+            DeleteFile(_fileIdProvider.GetFileName(fileId));
+        }
+
+        public void Dispose()
+        {
+            _fileIdProvider.Dispose();
         }
     }
 }
