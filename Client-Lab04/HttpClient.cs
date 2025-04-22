@@ -74,6 +74,7 @@ namespace Client
                                 Console.WriteLine("The request was sent.");
 
                                 string resp = await Stream.ReadStringAsync();
+                                // If server send 200 read file
                                 if (resp.Split()[0] == "200")
                                 {
                                     FileInfo file = new FileInfo(getSavedFileName);
@@ -81,6 +82,7 @@ namespace Client
                                     Console.WriteLine($"File {getSavedFileName} saved localy");
 
                                 }
+                                // else
                                 else if (resp == "404")
                                 {
                                     Console.WriteLine("The response says that the file not found!");
@@ -122,8 +124,11 @@ namespace Client
 
                                 await Stream.WriteStringAsync(query);
                                 Console.WriteLine("The request was sent.");
+                                // request for upload file on server
                                 var resp = (await Stream.ReadStringAsync()).Split();
                                 var statusCode = resp[0];
+
+                                // request approved
                                 if (statusCode == "200")
                                 {
                                     var fileId = resp[1];
@@ -132,6 +137,7 @@ namespace Client
                                     await Stream.WriteFileAsync(file, cts.Token);
                                     Console.WriteLine("File upload ended!");
                                 }
+                                // request not approved
                                 else if (statusCode == "403")
                                 {
                                     Console.WriteLine("The response says forbidden to copy this file!");
@@ -140,11 +146,6 @@ namespace Client
                                 {
                                     Console.WriteLine("Error code: " + statusCode);
                                 }
-
-
-
-
-
                                 break;
                             }
                         case "3":

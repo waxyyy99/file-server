@@ -29,9 +29,9 @@ namespace Server
             Console.WriteLine("[server] Client connected!");
             try
             {
+                using var cts = new CancellationTokenSource();
                 while (true)
                 {
-                    using var cts = new CancellationTokenSource();
 
                     var recievedMessage = await Stream.ReadStringAsync();
                     Console.WriteLine("[server] Recieved: {0}", recievedMessage);
@@ -53,23 +53,28 @@ namespace Server
                         // binary content
                         case "PUT":
                             {
+                                (FileInfo, int) fileId;
                                 try
                                 {
                                     var fileName = _[1];
 
-                                    //int firstSpace = recievedMessage.IndexOf(' ');
-                                    //int secondSpaceInd = recievedMessage.IndexOf(' ', firstSpace + 1);
-                                    //var text = recievedMessage[(secondSpaceInd + 1)..];
-                                    var fileId = _serverService.CreateFile(fileName);
+                                    fileId = _serverService.CreateFile(fileName);
+                                    // send id of created file
                                     response = new(200, fileId.Item2.ToString());
                                     await response.Send(Stream);
 
                                     await Stream.ReadFileAsync(fileId.Item1, cts.Token);
                                 }
-                                catch
+                                catch(IOException ex)
                                 {
+                                    throw new IOException("Can't read file from stream", ex);
+                                }
+                                catch(Exception ex)
+                                {
+                                    // request denied
                                     response = new(403, null);
                                     await response.Send(Stream);
+                                    break;
                                 }
                                 break;
                             }
@@ -95,9 +100,9 @@ namespace Server
                         // GET [BY_ID | BY_NAME] [ID | NAME]
                         case "GET":
                             {
-                                FileInfo content;
                                 try
                                 {
+                                    FileInfo content;
                                     var fileName = recievedMessage.Split()[1];
                                     content = _serverService.GetFile(fileName);
                                     response = new(200, null);
