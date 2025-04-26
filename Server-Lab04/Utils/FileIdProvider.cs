@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Server
+namespace Server.Utils
 {
     public class DictionaryCounter<TValue>
     {

@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Server.Commands;
+using Server.Commands.Interface;
+using Server.RequestHandle;
+using Server.Services;
+using System;
 using System.Collections.Generic;
 using System.IO.Pipes;
 using System.Linq;
@@ -14,6 +18,7 @@ namespace Server
     public class HttpServer
     {
         private readonly ServerService _serverService;
+        private readonly HandlerFactory _handlerFactory;
         public static uint AmountOfSolvedEquations { get; private set; } = 0;
         public static Dictionary<int, User> UserTask { get; private set; } = new Dictionary<int, User>();
         public IPAddress Ip { get; init; }
@@ -21,6 +26,12 @@ namespace Server
 
         public HttpServer(IPAddress ip, int port) {
             _serverService = new ServerService();
+            _handlerFactory = new(
+            [
+                new DeleteHandler(),
+                new GetHandler(),
+                new PutHandler()
+            ]);
             Ip = ip;
             Port = port;
         }
@@ -58,7 +69,7 @@ namespace Server
 
                     // Принимаем клиента
                     TcpClient client = await server.AcceptTcpClientAsync(cts.Token);
-                    ClientSession session = new(client, _serverService);
+                    ClientSession session = new(client, _serverService, );
                     _ = Task.Run(session.HandleAsync);
                 }
             }

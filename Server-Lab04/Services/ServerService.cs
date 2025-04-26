@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Server.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Server
+namespace Server.Services
 {
     public class ServerService : IDisposable
     {
