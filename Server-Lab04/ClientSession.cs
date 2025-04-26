@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace Server
     public class ClientSession
     {
         private readonly ServerService _serverService;
+        private readonly CancellationTokenSource cts;
         public TcpClient Client { get; }
         public NetworkStream Stream => Client.GetStream();
 
@@ -17,8 +19,10 @@ namespace Server
         public string? Username { get; set; }
 
 
+
         public ClientSession(TcpClient client, ServerService service)
         {
+            cts = new CancellationTokenSource();
             Client = client;
             _serverService = service;
         }
@@ -29,7 +33,6 @@ namespace Server
             Console.WriteLine("[server] Client connected!");
             try
             {
-                using var cts = new CancellationTokenSource();
                 while (true)
                 {
 
@@ -83,17 +86,41 @@ namespace Server
                             {
                                 try
                                 {
-                                    var method = _[1];
-                                    var fileName = _[2];
+                                    var findMethod = _[1];
+                                    var fileFindCredentials = _[2];
 
-                                    _serverService.DeleteFile(fileName);
+                                    if (findMethod == "BY_ID")
+                                    {
+                                        int id;
+                                        if (!int.TryParse(fileFindCredentials, out id))
+                                        {
+                                            throw new ArgumentException("Can't parse id");
+                                        }
+                                        _serverService.DeleteFile(id);
+                                    }
+                                    else if (findMethod == "BY_NAME")
+                                    {
+                                        _serverService.DeleteFile(fileFindCredentials);
+                                    }
+                                    else
+                                    {
+                                        throw new ArgumentException();
+                                    }
+
                                     response = new(200, null);
                                     await response.Send(Stream);
+                                }
+                                catch (ArgumentException ex)
+                                {
+                                    response = new(400, null);
+                                    await response.Send(Stream);
+                                    break;
                                 }
                                 catch
                                 {
                                     response = new(404, null);
                                     await response.Send(Stream);
+                                    break;
                                 }
                                 break;
                             }
@@ -103,13 +130,36 @@ namespace Server
                                 try
                                 {
                                     FileInfo content;
-                                    var fileName = recievedMessage.Split()[1];
-                                    content = _serverService.GetFile(fileName);
+                                    var findMethod = _[1];
+                                    var fileFindCredentials = _[2];
+                                    if (findMethod == "BY_ID")
+                                    {
+                                        int id;
+                                        if (!int.TryParse(fileFindCredentials, out id))
+                                        {
+                                            throw new ArgumentException("Can't parse id");
+                                        }
+                                        content = _serverService.GetFile(id);
+                                    }
+                                    else if (findMethod == "BY_NAME")
+                                    {
+                                        content = _serverService.GetFile(fileFindCredentials);
+                                    }
+                                    else
+                                    {
+                                        throw new ArgumentException();
+                                    }
                                     response = new(200, null);
                                     await response.Send(Stream);
 
                                     await Stream.WriteFileAsync(content, cts.Token);
                                     Console.WriteLine("[server] Send file: " + content.Name);
+                                }
+                                catch (ArgumentException ex)
+                                {
+                                    response = new(400, null);
+                                    await response.Send(Stream);
+                                    break;
                                 }
                                 catch
                                 {
@@ -138,6 +188,7 @@ namespace Server
             }
             finally
             {
+                cts.Cancel();
                 Client.Close();
                 Console.WriteLine("[server] User disconnected");
             }

@@ -6,7 +6,7 @@ namespace Client
 {
     public class HttpClient
     {
-        private TcpClient client { get; init; }
+        private TcpClient client { get; set; }
         NetworkStream Stream => client.GetStream();
         public IPAddress Ip { get; init; }
         public int Port { get; init; }
@@ -16,24 +16,17 @@ namespace Client
             Ip = ip;
             Port = port;
 
-            try
-            {
-                client = new TcpClient(Ip.ToString(), Port);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Ошибка клиента: {0}", ex.Message);
-            }
         }
 
         public async Task StartUp(string[] args)
         {
             try
             {
+                client = new TcpClient(Ip.ToString(), Port);
                 while (true)
                 {
                     using var cts = new CancellationTokenSource();
-                    Console.WriteLine("Enter action (1 - get a file from server, 2 - copy file to server, 3 - delete a file, exit - to exit):");
+                    Console.WriteLine("Enter action (1 - get a file from server, 2 - copy file to server, 3 - delete a file, rec - to reconnect, exit - to exit):");
                     string? command = Console.ReadLine();
 
                     if (string.IsNullOrWhiteSpace(command))
@@ -49,18 +42,55 @@ namespace Client
                     {
                         break;
                     }
+                    else if(command == "rec")
+                    {
+                        client.Close();
+                        client = new TcpClient(Ip.ToString(), Port);
+                    }
                     switch (command)
                     {
                         case "1":
                             {
 
                                 query += "GET ";
-                                Console.WriteLine("Enter filename: ");
-                                string getFileName = Console.ReadLine() ?? "";
-                                if (string.IsNullOrEmpty(getFileName))
+                                Console.WriteLine("Do you want to get the file by name or by id (1 - name, 2 - id):");
+                                string? getMethod = Console.ReadLine();
+
+                                if (string.IsNullOrWhiteSpace(getMethod))
                                 {
+                                    Console.WriteLine("Empty input! Please try again");
                                     continue;
                                 }
+
+                                if (getMethod == "1")
+                                {
+                                    Console.WriteLine("Enter file name: ");
+                                    string getFileName = Console.ReadLine() ?? "";
+                                    if (string.IsNullOrEmpty(getFileName))
+                                    {
+                                        continue;
+                                    }
+                                    query += "BY_NAME ";
+                                    query += getFileName;
+
+                                }
+                                else if (getMethod == "2")
+                                {
+                                    Console.WriteLine("Enter file id: ");
+                                    string getFileId = Console.ReadLine() ?? "";
+                                    if (string.IsNullOrEmpty(getFileId))
+                                    {
+                                        continue;
+                                    }
+                                    query += "BY_ID ";
+                                    query += getFileId;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Unknown command! Please try again");
+                                    continue;
+                                }
+
                                 Console.WriteLine("Enter saved file: ");
                                 string getSavedFileName = Console.ReadLine() ?? "";
                                 if (string.IsNullOrEmpty(getSavedFileName))
@@ -68,7 +98,6 @@ namespace Client
                                     continue;
                                 }
 
-                                query += getFileName;
 
                                 await Stream.WriteStringAsync(query);
                                 Console.WriteLine("The request was sent.");
@@ -151,13 +180,44 @@ namespace Client
                         case "3":
                             {
                                 query += "DELETE ";
-                                Console.WriteLine("Enter filename: ");
-                                string input = Console.ReadLine();
-                                if (string.IsNullOrEmpty(input))
+
+                                Console.WriteLine("Do you want to delete the file by name or by id (1 - name, 2 - id):");
+                                string? deleteMethod = Console.ReadLine();
+
+                                if (string.IsNullOrWhiteSpace(deleteMethod))
                                 {
+                                    Console.WriteLine("Empty input! Please try again");
                                     continue;
                                 }
-                                query += input;
+
+                                if (deleteMethod == "1")
+                                {
+                                    Console.WriteLine("Enter filename: ");
+                                    string getFileName = Console.ReadLine() ?? "";
+                                    if (string.IsNullOrEmpty(getFileName))
+                                    {
+                                        continue;
+                                    }
+                                    query += "BY_NAME ";
+                                    query += getFileName;
+
+                                }
+                                else if (deleteMethod == "2")
+                                {
+                                    Console.WriteLine("Enter file id: ");
+                                    string getFileId = Console.ReadLine() ?? "";
+                                    if (string.IsNullOrEmpty(getFileId))
+                                    {
+                                        continue;
+                                    }
+                                    query += "BY_ID ";
+                                    query += getFileId;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Unknown command! Please try again");
+                                    continue;
+                                }
 
                                 await Stream.WriteStringAsync(query);
                                 Console.WriteLine("The request was sent.");
