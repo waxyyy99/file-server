@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO.Pipes;
-using System.Linq;
+﻿using Server.RequestHandle;
+using Server.RequestHandle.Commands;
+using Server.Services;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Server
 {
     public class HttpServer
     {
         private readonly ServerService _serverService;
+        private readonly HandlerFactory _handlerFactory;
         public static uint AmountOfSolvedEquations { get; private set; } = 0;
         public static Dictionary<int, User> UserTask { get; private set; } = new Dictionary<int, User>();
         public IPAddress Ip { get; init; }
@@ -21,6 +17,12 @@ namespace Server
 
         public HttpServer(IPAddress ip, int port) {
             _serverService = new ServerService();
+            _handlerFactory = new(
+            [
+                new DeleteHandler(),
+                new GetHandler(),
+                new PutHandler()
+            ]);
             Ip = ip;
             Port = port;
         }
@@ -58,7 +60,7 @@ namespace Server
 
                     // Принимаем клиента
                     TcpClient client = await server.AcceptTcpClientAsync(cts.Token);
-                    ClientSession session = new(client, _serverService);
+                    ClientSession session = new(client, _serverService, _handlerFactory);
                     _ = Task.Run(session.HandleAsync);
                 }
             }
