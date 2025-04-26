@@ -42,7 +42,6 @@ namespace Server
         /// <exception cref="ArgumentException"></exception>
         public (FileInfo, int) CreateFile(string fileName)
         {
-
             string[] path = ["server", "data", fileName];
             var universalPath = Path.Combine(path);
             var fileInfo = new FileInfo(universalPath);
@@ -52,21 +51,36 @@ namespace Server
             }
             
             fileInfo.Create().Close();
-            return (fileInfo, _fileIdProvider.AppendFile(fileName));
+            var x = (fileInfo, _fileIdProvider.AppendFile(fileName));
+            _fileIdProvider.Commit();
+            return x;
         }
 
         public void DeleteFile(string fileName)
         {
-            if (!File.Exists(fileName))
+            string[] path = ["server", "data", fileName];
+            var universalPath = Path.Combine(path);
+            var fileInfo = new FileInfo(universalPath);
+            if (!fileInfo.Exists)
             {
                 throw new Exception($"Have no file: {fileName}");
             }
-            File.Delete(fileName);
+            fileInfo.Delete();
             _fileIdProvider.DeleteFile(fileName);
+            _fileIdProvider.Commit();
         }
         public void DeleteFile(int fileId)
         {
-            DeleteFile(_fileIdProvider.GetFileName(fileId));
+            var fileName = _fileIdProvider.GetFileName(fileId); string[] path = ["server", "data", fileName];
+            var universalPath = Path.Combine(path);
+            var fileInfo = new FileInfo(universalPath);
+            if (!fileInfo.Exists)
+            {
+                throw new Exception($"Have no file: {fileName}");
+            }
+            fileInfo.Delete();
+            _fileIdProvider.DeleteFile(fileId);
+            _fileIdProvider.Commit();
         }
 
         public void Dispose()

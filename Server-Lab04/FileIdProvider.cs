@@ -45,10 +45,14 @@ namespace Server
             using var file = _jsonFile.OpenRead();
             nameIdPair = JsonSerializer.Deserialize<DictionaryCounter<string>>(file) ?? new();
         }
-        public void Dispose()
+        public void Commit()
         {
             using var file = _jsonFile.Open(FileMode.Create);
             JsonSerializer.Serialize(file, nameIdPair);
+        }
+        public void Dispose()
+        {
+            Commit();
         }
 
         public bool ContainsFile(string fileName)

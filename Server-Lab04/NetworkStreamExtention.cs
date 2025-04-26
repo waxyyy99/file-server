@@ -46,7 +46,7 @@ namespace Server
             byte[] length = new byte[8];
             await ns.ReadExactlyAsync(length, cancellationToken);
             long fileLength = BitConverter.ToInt64(length, 0);
-            Console.WriteLine($"File length: {fileLength}");
+            Console.WriteLine($"Reading file with length: {fileLength}");
 
             const int bufferSize = 81920;
             byte[] buffer = new byte[bufferSize];
@@ -60,7 +60,7 @@ namespace Server
                 if (read == 0) throw new IOException("Сокет преждевременно закрыл соединение.");
                 await fs.WriteAsync(buffer, 0, read, cancellationToken);
                 recieved += read;
-                Console.WriteLine(recieved);
+                //Console.WriteLine(recieved);
             }
         }
     }
