@@ -9,6 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server-Lab04", "Server-Lab0
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решения", "Элементы решения", "{754FC069-D67B-A9D7-50A1-8D1CA196D8F1}"
 	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
 		DELETE.drawio.png = DELETE.drawio.png
 		GET.drawio.png = GET.drawio.png
 		PUT.drawio.png = PUT.drawio.png

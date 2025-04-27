@@ -487,3 +487,6 @@ $RECYCLE.BIN/
 
 # obsidian dir
 .obsidian/
+
+# schemas xml
+*.drawio
