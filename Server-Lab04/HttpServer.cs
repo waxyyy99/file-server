@@ -9,9 +9,7 @@ namespace Server
     public class HttpServer
     {
         private readonly ServerService _serverService;
-        private readonly HandlerFactory _handlerFactory;
-        public static uint AmountOfSolvedEquations { get; private set; } = 0;
-        public static Dictionary<int, User> UserTask { get; private set; } = new Dictionary<int, User>();
+        private readonly RequestHandlerFactory _handlerFactory;
         public IPAddress Ip { get; init; }
         public int Port { get; init; }
 
@@ -56,7 +54,6 @@ namespace Server
                 while (!cts.IsCancellationRequested)
                 {
                     Console.WriteLine("[server] Ожидание подключения...");
-                    //Thread.Sleep(10000);
 
                     // Принимаем клиента
                     TcpClient client = await server.AcceptTcpClientAsync(cts.Token);
