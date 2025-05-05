@@ -8,6 +8,10 @@ using System.Threading.Tasks;
 
 namespace Server.Utils
 {
+    /// <summary>
+    /// Класс для значений ID - Value, который сохраняет последний ID
+    /// </summary>
+    /// <typeparam name="TValue"></typeparam>
     public class DictionaryCounter<TValue>
     {
         [JsonInclude]
@@ -28,7 +32,9 @@ namespace Server.Utils
         }
     }
 
-
+    /// <summary>
+    /// Класс для менеджмента хранения файлов на сервере 
+    /// </summary>
     public class FileIdProvider : IDisposable
     {
         protected readonly DictionaryCounter<string> nameIdPair;

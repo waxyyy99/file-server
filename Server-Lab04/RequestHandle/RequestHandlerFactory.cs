@@ -2,10 +2,10 @@
 
 namespace Server.RequestHandle
 {
-    public class HandlerFactory
+    public class RequestHandlerFactory
     {
         private readonly IEnumerable<ICommandHandler> _handlers;
-        public HandlerFactory(IEnumerable<ICommandHandler> handlers)
+        public RequestHandlerFactory(IEnumerable<ICommandHandler> handlers)
         {
             _handlers = handlers;
         }

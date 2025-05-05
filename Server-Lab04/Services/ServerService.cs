@@ -10,15 +10,12 @@ namespace Server.Services
 {
     public class ServerService : IDisposable
     {
-        //public Dictionary<int, string> nameId;
         private readonly FileIdProvider _fileIdProvider;
         public ServerService()
         {
             const string fileName = "pairs.json";
             FileInfo fileInfo = new(fileName);
             _fileIdProvider = new(fileInfo);
-            //using var file = File.OpenRead(fileName);
-            //nameId = JsonSerializer.Deserialize<Dictionary<int, string>>(file)!;
         }
         public bool ContainsFile(string fileName) => _fileIdProvider.ContainsFile(fileName);
         public bool ContainsFile(int fileId) => _fileIdProvider.ContainsFile(fileId);
@@ -35,12 +32,7 @@ namespace Server.Services
             return fileInfo;
         }
         public FileInfo GetFile(int fileId) => GetFile(_fileIdProvider.GetFileName(fileId));
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="fileName"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
+
         public (FileInfo, int) CreateFile(string fileName)
         {
             string[] path = ["server", "data", fileName];

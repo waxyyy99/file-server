@@ -7,7 +7,7 @@ namespace Server.RequestHandle
     public class ClientSession
     {
         private readonly ServerService _serverService;
-        private readonly HandlerFactory _handlerFactory;
+        private readonly RequestHandlerFactory _handlerFactory;
         public CancellationTokenSource cts;
         public TcpClient Client { get; }
         public NetworkStream Stream => Client.GetStream();
@@ -17,7 +17,7 @@ namespace Server.RequestHandle
 
 
 
-        public ClientSession(TcpClient client, ServerService service, HandlerFactory handlerFactory)
+        public ClientSession(TcpClient client, ServerService service, RequestHandlerFactory handlerFactory)
         {
             cts = new CancellationTokenSource();
             Client = client;
